@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI·ICT 기술 스캐닝 대시보드</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background: #f8fafc; color: #1f2937; }
+    .cards { display:grid; grid-template-columns: repeat(3, minmax(180px,1fr)); gap:12px; margin-bottom: 20px; }
+    .card { background:white; border-radius:10px; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+    h1,h2 { margin: 8px 0 12px; }
+    .panel { background:white; border-radius:12px; padding:16px; margin-bottom:16px; box-shadow:0 1px 4px rgba(0,0,0,0.08); }
+    table { width:100%; border-collapse: collapse; font-size: 13px; }
+    th,td { border:1px solid #e5e7eb; padding:8px; text-align:left; vertical-align:top; }
+    th { background:#f1f5f9; }
+    img { width: 100%; max-width: 980px; border:1px solid #e5e7eb; border-radius:8px; background:white; }
+    .muted { color:#64748b; font-size:12px; }
+  </style>
+</head>
+<body>
+  <h1>AI·ICT 기술 스캐닝 대시보드</h1>
+  <div class="cards">
+    <div class="card"><div class="muted">기술 토픽 수</div><div><b>10</b></div></div>
+    <div class="card"><div class="muted">기술 클러스터 수</div><div><b>4</b></div></div>
+    <div class="card"><div class="muted">생성 산출물</div><div><b>Markdown + CSV + SVG + HTML</b></div></div>
+  </div>
+
+  <section class="panel">
+    <h2>기술 토픽</h2>
+    <table>
+      <thead><tr><th>기술 토픽</th><th>대표 키워드</th><th>논문/특허 증가 추세</th><th>주요 응용 산업</th></tr></thead>
+      <tbody><tr><td>Topic 0</td><td>edge, industrial, smart, camera, low-latency, factori, defect, automation</td><td>판단 불가</td><td>Manufacturing/Robotics</td></tr>
+<tr><td>Topic 1</td><td>hospital, federat, learn, medical, privacy, train, collaborative, diagnosi</td><td>판단 불가</td><td>Healthcare/Bio, Security</td></tr>
+<tr><td>Topic 2</td><td>anomaly, detection, secure, slic, virtualiz, infrastructur, cybersecurity, telecom</td><td>판단 불가</td><td>Telecom/Network, Security</td></tr>
+<tr><td>Topic 3</td><td>security, intrusion, packet, analytic, platform, telecom, learn, h04l</td><td>판단 불가</td><td>Telecom/Network, Security</td></tr>
+<tr><td>Topic 4</td><td>machine, failure, prediction, maintenance, factory, g05b, iot, predictive</td><td>판단 불가</td><td>Manufacturing/Robotics</td></tr>
+<tr><td>Topic 5</td><td>on-device, inference, g06f, compres, compression, mobile, g06n, detection</td><td>판단 불가</td><td>범용 ICT</td></tr>
+<tr><td>Topic 6</td><td>control, route, b60w, vehicle, bas, plann, controller, reinforcement</td><td>판단 불가</td><td>Mobility/Automotive</td></tr>
+<tr><td>Topic 7</td><td>code, generation, language, large, transformer-bas, software, review, transformer</td><td>판단 불가</td><td>범용 ICT</td></tr>
+<tr><td>Topic 8</td><td>driv, autonomou, self-driv, perception, multimodal, car, lidar, improv</td><td>판단 불가</td><td>Mobility/Automotive</td></tr>
+<tr><td>Topic 9</td><td>participant, encrypt, aggregation, optimization, gradient, federat, acros, privacy-preserv</td><td>판단 불가</td><td>Security</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>기술 클러스터</h2>
+    <table>
+      <thead><tr><th>기술 클러스터</th><th>포함 기술 토픽</th><th>대표 기술</th><th>주요 산업</th></tr></thead>
+      <tbody><tr><td>Cluster 0</td><td>Topic 1, Topic 6, Topic 7</td><td>hospital, federat, learn</td><td>Healthcare/Bio, Security; Mobility/Automotive; 범용 ICT</td></tr>
+<tr><td>Cluster 1</td><td>Topic 0, Topic 2, Topic 8</td><td>edge, industrial, smart</td><td>Manufacturing/Robotics; Mobility/Automotive; Telecom/Network, Security</td></tr>
+<tr><td>Cluster 2</td><td>Topic 4</td><td>machine, failure, prediction</td><td>Manufacturing/Robotics</td></tr>
+<tr><td>Cluster 3</td><td>Topic 3, Topic 5, Topic 9</td><td>security, intrusion, packet</td><td>Security; Telecom/Network, Security; 범용 ICT</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>토픽 유사도 히트맵</h2>
+    <img src="tech_topics_heatmap.svg" alt="topic similarity heatmap" />
+  </section>
+
+  <section class="panel">
+    <h2>기술 클러스터 맵</h2>
+    <img src="tech_topics_clusters.svg" alt="technology cluster map" />
+  </section>
+</body>
+</html>

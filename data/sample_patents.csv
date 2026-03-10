@@ -1,0 +1,6 @@
+title,abstract,CPC,IPC,year
+Method for On-device Model Compression,Compress neural network for mobile inference.,G06N,G06F,2021
+System for Predictive Maintenance in Factory,Industrial IoT and AI for machine failure prediction.,G05B,H04L,2022
+Privacy-preserving Federated Optimization,Encrypted gradient aggregation across participants.,G06N,H04L,2023
+Autonomous Vehicle Decision Controller,Reinforcement learning based route and control planning.,B60W,G06N,2020
+Network Intrusion Detection using Deep Learning,Deep packet analytics for telecom security platform.,H04L,G06N,2024
