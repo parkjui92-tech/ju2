@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOPTI AI Agent Team</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  * { font-family: 'Noto Sans KR', system-ui, sans-serif; box-sizing: border-box; }
+  .jb { font-family: 'JetBrains Mono', 'Fira Code', monospace !important; }
+  @keyframes fadeSlideUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes pulseDot   { 0%,100%{opacity:1} 50%{opacity:.35} }
+  @keyframes spin       { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  @keyframes blink      { 0%,100%{opacity:1} 50%{opacity:0} }
+  .fade-in    { animation: fadeSlideUp .55s ease-out forwards; }
+  .pulse-dot  { animation: pulseDot 2s ease-in-out infinite; }
+  .spin       { animation: spin 1s linear infinite; }
+  .blink-cur  { animation: blink .9s step-end infinite; }
+  .card-hover { transition: transform .2s, box-shadow .2s; }
+  .card-hover:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.10); }
+</style>
+</head>
+<body class="bg-gray-50">
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = window._Recharts || window;
+
+/* ── Icons ── */
+const IcoArrow = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M19 12H5M12 5l-7 7 7 7"/>
+  </svg>
+);
+const IcoCheck = ({ size=17, color="#10B981" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{flexShrink:0}}>
+    <circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/>
+  </svg>
+);
+const IcoLoader = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round" className="spin">
+    <path d="M21 12a9 9 0 1 1-6.22-8.56"/>
+  </svg>
+);
+const IcoFile = ({ color }) => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/>
+  </svg>
+);
+const IcoUp   = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>;
+const IcoDown = () => <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>;
+
+/* ══════════════════════════════════════════════════
+   데이터
+══════════════════════════════════════════════════ */
+const AGENTS = [
+  {
+    id:"haNeul", name:"김하늘", rank:"주임연구원", dept:"기획조정부",
+    color:"#0891B2", bgLight:"#CFFAFE", status:"오늘 공고 3건 새로 올라왔어요", seed:"HaNuel",
+    tasks:[
+      { id:"announcements", label:"나라장터 공고 수집",
+        prompt:"claude '나라장터 API로 최근 1개월 광학 관련 신규 공고를 수집하고\n발주기관·추정가격·마감일·긴급도 기준으로 정리해줘'" },
+      { id:"kpis", label:"기관평가 실적 집계",
+        prompt:"claude '기관평가 성과지표 항목별 실적을 집계하고\n목표 대비 달성률과 전년 대비 증감을 계산해줘'" },
+    ],
+  },
+  {
+    id:"joonHyuk", name:"박준혁", rank:"선임연구원", dept:"연구기획팀",
+    color:"#7C3AED", bgLight:"#EDE9FE", status:"제안서 초안 3건 작업 중입니다", seed:"JoonHyuk",
+    tasks:[
+      { id:"proposal", label:"과제 제안서 초안",
+        prompt:"claude '다파장 광학 환경 모니터링 센서 개발 과제 제안서 초안 작성.\n필요성 → 연구내용 → 시장현황 → 기대효과 섹션 포함'" },
+      { id:"competition", label:"경쟁과제 분석",
+        prompt:"claude 'NTIS 기반 최근 3년 광학센서 국가R&D 147건 분석.\n주관기관 TOP5·연구비 분포·우리 기관 포지셔닝 정리'" },
+    ],
+  },
+  {
+    id:"seoYun", name:"이서윤", rank:"연구원", dept:"연구지원팀",
+    color:"#059669", bgLight:"#D1FAE5", status:"논문 87건 스크리닝 완료했어요", seed:"SeoYun",
+    tasks:[
+      { id:"papers", label:"논문 서베이",
+        prompt:"claude 'OpenAlex API로 photonic sensor 논문 100건 수집.\n연구유형별 분류 및 인용수 TOP 논문 목록 생성'" },
+      { id:"patents", label:"특허 동향 분석",
+        prompt:"claude 'KIPRIS에서 광센서 특허 342건 검색.\n연도별 출원 추이와 출원인 TOP5 순위 분석'" },
+    ],
+  },
+  {
+    id:"minSu", name:"최민수", rank:"책임연구원", dept:"기술지원센터",
+    color:"#DC2626", bgLight:"#FEE2E2", status:"Sample_C 재측정 필요합니다", seed:"MinSu",
+    tasks:[
+      { id:"spectral", label:"분광 데이터 분석",
+        prompt:"claude '측정 원시 데이터 4개 샘플에서 피크 파장·강도·FWHM 검출.\n이상치 식별 및 판정 결과 리포트 생성'" },
+      { id:"equipment", label:"장비 이용 리포트",
+        prompt:"claude '2026년 3월 장비 이용 실적 집계.\n장비별 가동률 및 주요 이용팀 월간 리포트 작성'" },
+    ],
+  },
+  {
+    id:"yuJin", name:"정유진", rank:"선임연구원", dept:"대외협력팀",
+    color:"#B45309", bgLight:"#FEF3C7", status:"프라운호퍼 서한 초안 완료", seed:"YuJin",
+    tasks:[
+      { id:"letter", label:"해외 협력 서한",
+        prompt:"claude '프라운호퍼 IOF Tünnermann 교수에게\n초고속 레이저 가공 공동연구 제안 영문 서한 작성'" },
+      { id:"content", label:"홍보 콘텐츠 제작",
+        prompt:"claude '나노 광센서 개발 성과를 홈페이지 소개글(500자)과\n카드뉴스 3장 형식으로 작성'" },
+    ],
+  },
+];
+
+const RESULTS = {
+  announcements:{
+    title:"나라장터 공고 수집 완료 · 5건",
+    rows:[
+      {공고명:"차세대 광센서 시스템 개발 연구용역",발주기관:"과학기술정보통신부",추정가격:"4억 8,000만원",마감일:"2026-04-30",긴급도:"🔴 7일"},
+      {공고명:"레이저 가공 장비 고도화 사업",발주기관:"산업통상자원부",추정가격:"3억 2,000만원",마감일:"2026-05-15",긴급도:"🟡 22일"},
+      {공고명:"광학 측정 표준 체계 구축 용역",발주기관:"국가기술표준원",추정가격:"1억 5,000만원",마감일:"2026-04-25",긴급도:"🔴 2일"},
+      {공고명:"LED 조명 성능 시험평가 용역",발주기관:"한국광기술원",추정가격:"8,000만원",마감일:"2026-05-01",긴급도:"🟡 8일"},
+      {공고명:"포토닉스 부품 신뢰성 시험 용역",발주기관:"한국전자통신연구원",추정가격:"6,500만원",마감일:"2026-05-10",긴급도:"🟡 17일"},
+    ],
+  },
+  kpis:{
+    title:"기관평가 실적 집계 완료",
+    rows:[
+      {지표:"SCI 논문",실적:"87건",목표:"80건",pct:109,전년대비:"+12건",up:true},
+      {지표:"특허 출원",실적:"23건",목표:"25건",pct:92,전년대비:"-2건",up:false},
+      {지표:"기술이전",실적:"12건",목표:"10건",pct:120,전년대비:"+3건",up:true},
+      {지표:"장비 가동률",실적:"78%",목표:"75%",pct:104,전년대비:"+5%p",up:true},
+      {지표:"인력 양성",실적:"45명",목표:"40명",pct:113,전년대비:"+8명",up:true},
+    ],
+  },
+  proposal:{
+    title:"과제 제안서 초안 생성 완료",filename:"과제제안서_초안.docx",
+    sections:[
+      {name:"1. 연구 필요성",pages:2,preview:"글로벌 환경 모니터링 시장은 2025년 기준 238억 달러 규모로, 연평균 8.3% 성장 전망. 기존 전기화학식 센서의 한계(낮은 선택성, 짧은 수명)를 광학 센서로 극복 가능..."},
+      {name:"2. 연구 내용 및 방법",pages:3,preview:"세부과제 1: 다파장 광학 센서 어레이 설계\n세부과제 2: AI 기반 스펙트럼 분석 알고리즘\n세부과제 3: 현장 실증 및 모니터링 플랫폼 구축"},
+      {name:"3. 시장·제품 현황",pages:1,preview:"국내 환경 센서 시장 약 3,200억원(2025). 주요 경쟁사: Thermo Fisher, Horiba, Hach. 국산화율 35%..."},
+      {name:"4. 활용방안 및 기대효과",pages:1,preview:"기술 파급: 다파장 동시 측정 원천기술 확보 / 경제: 수입 대체 연 500억원 / 사회: 실시간 환경 모니터링 인프라 구축"},
+    ],
+  },
+  competition:{
+    title:"경쟁과제 분석 완료 · 147건",
+    summary:"최근 3년간 '광학 센서' 관련 국가R&D 과제 총 147건, 총 연구비 약 1,820억원",
+    findings:["주관기관 TOP 5: KAIST(18건), ETRI(15건), 광기술원(12건), 서울대(11건), KIST(9건)","평균 연구비: 12.4억원/과제","분야 분포: 광센서(42%), 바이오포토닉스(23%), 라이다(18%), 기타(17%)","부처별: 과기정통부(68%), 산업부(22%), 중기부(10%)","우리 기관 포지셔닝: 기관별 순위 3위, LED/광소자 분야에서 강점"],
+  },
+  papers:{
+    title:"논문 서베이 완료 · 100건",
+    classification:{실험:52,시뮬레이션:28,리뷰:12,이론:8},
+    topPapers:[
+      {title:"Advances in silicon photonic biosensors for point-of-care diagnostics",citations:187,journal:"Nature Photonics",year:2024},
+      {title:"Machine learning-enhanced fiber optic sensing: A comprehensive review",citations:143,journal:"Optics Express",year:2024},
+      {title:"Ultra-sensitive plasmonic sensor arrays for environmental monitoring",citations:98,journal:"ACS Nano",year:2023},
+    ],
+  },
+  patents:{
+    title:"특허 동향 분석 완료 · 342건",
+    trend:[{year:"2021",count:52},{year:"2022",count:61},{year:"2023",count:78},{year:"2024",count:84},{year:"2025",count:67}],
+    topApplicants:[{name:"삼성전자",count:45},{name:"LG이노텍",count:32},{name:"KAIST",count:28},{name:"한국광기술원",count:22},{name:"서울대학교",count:18}],
+  },
+  spectral:{
+    title:"분광 데이터 분석 완료 · 4 샘플",
+    samples:[
+      {name:"Sample_A",peak:"532.4 nm",intensity:"0.87 a.u.",fwhm:"2.1 nm",ok:true},
+      {name:"Sample_B",peak:"534.1 nm",intensity:"0.92 a.u.",fwhm:"1.8 nm",ok:true},
+      {name:"Sample_C",peak:"531.8 nm",intensity:"0.43 a.u.",fwhm:"4.7 nm",ok:false},
+      {name:"Sample_D",peak:"533.2 nm",intensity:"0.79 a.u.",fwhm:"2.3 nm",ok:true},
+    ],
+  },
+  equipment:{
+    title:"장비 이용 리포트 · 2026년 3월",
+    items:[
+      {name:"분광분석기 (UV-Vis)",hours:156,target:200,pct:78,top:"광소자연구팀"},
+      {name:"레이저 가공기",hours:189,target:180,pct:105,top:"레이저응용연구팀"},
+      {name:"광학현미경 (SEM)",hours:210,target:200,pct:105,top:"광소재연구팀"},
+      {name:"LED 광특성 측정기",hours:92,target:150,pct:61,top:"LED연구팀"},
+    ],
+  },
+  letter:{
+    title:"해외 협력 서한 작성 완료",filename:"collaboration_letter_Fraunhofer.docx",
+    to:"Prof. Dr. Andreas Tünnermann, Fraunhofer IOF",
+    subject:"Proposal for Joint Research Collaboration on Ultrafast Laser Processing",
+    preview:"Dear Prof. Tünnermann,\n\nOn behalf of the Korea Photonics Technology Institute (KOPTI), I am writing to propose a collaborative research initiative in the field of ultrafast laser processing.\n\nThe proposed 2-year program would focus on:\n1. Development of high-power femtosecond laser systems for precision micromachining\n2. Advanced laser-material interaction studies for photonic device fabrication\n3. Joint training and exchange of early-career researchers\n\nKOPTI has established significant capabilities in laser technology...",
+  },
+  content:{
+    title:"홍보 콘텐츠 제작 완료 · 4건",
+    outputs:[
+      {format:"홈페이지 소개글 (500자)",preview:"한국광기술원 연구팀이 머리카락 두께의 1/100 수준인 나노 광센서를 개발하여 대기 중 미세먼지를 실시간으로 측정하는 데 성공했습니다. 이 기술은 기존 측정 장비 대비 10배 빠른 응답 속도를 가지며..."},
+      {format:"카드뉴스 1장",preview:"🔬 머리카락보다 100배 작은 센서로 미세먼지를 잡는다?"},
+      {format:"카드뉴스 2장",preview:"💡 빛을 이용한 광센서 기술로 기존 대비 10배 빠른 측정 가능"},
+      {format:"카드뉴스 3장",preview:"🌍 한국광기술원의 나노 광센서, 2027년 상용화 목표"},
+    ],
+  },
+};
+
+/* ══════════════════════════════════════════════════
+   결과 컴포넌트
+══════════════════════════════════════════════════ */
+function AnnouncementsResult({rows}){
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="bg-gray-50">
+            {["공고명","발주기관","추정가격","마감일","긴급도"].map(h=>(
+              <th key={h} className="px-3 py-2 text-left font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap text-xs">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r,i)=>(
+            <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
+              <td className="px-3 py-2.5 font-medium text-gray-900 text-sm leading-snug">{r.공고명}</td>
+              <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap text-xs">{r.발주기관}</td>
+              <td className="px-3 py-2.5 text-gray-700 whitespace-nowrap jb text-xs">{r.추정가격}</td>
+              <td className="px-3 py-2.5 text-gray-500 whitespace-nowrap text-xs">{r.마감일}</td>
+              <td className="px-3 py-2.5 whitespace-nowrap text-sm">{r.긴급도}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function KpiResult({rows}){
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {rows.map((r,i)=>(
+        <div key={i} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+          <div className="text-xs text-gray-400 mb-1">{r.지표}</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-bold text-gray-900">{r.pct}%</span>
+            <span className={"text-xs font-semibold "+(r.pct>=100?"text-emerald-600":"text-red-500")}>
+              {r.pct>=100?"✅ 달성":"⚠️ 미달"}
+            </span>
+          </div>
+          <div className="text-xs text-gray-500 mt-0.5">{r.실적} / 목표 {r.목표}</div>
+          <div className={"mt-1.5 text-xs font-medium flex items-center gap-1 "+(r.up?"text-emerald-600":"text-red-500")}>
+            {r.up?<IcoUp/>:<IcoDown/>} 전년 대비 {r.전년대비}
+          </div>
+          <div className="mt-2 h-1.5 rounded-full bg-gray-100 overflow-hidden">
+            <div className={"h-full rounded-full "+(r.pct>=100?"bg-emerald-400":"bg-red-400")} style={{width:`${Math.min(r.pct,100)}%`}}/>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ProposalResult({filename,sections}){
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4 p-3 bg-violet-50 border border-violet-200 rounded-lg">
+        <IcoFile color="#7C3AED"/>
+        <span className="text-sm font-medium text-violet-800">{filename}</span>
+        <span className="ml-auto text-xs bg-violet-100 text-violet-600 px-2 py-0.5 rounded-full">생성 완료</span>
+      </div>
+      <div className="space-y-2.5">
+        {sections.map((s,i)=>(
+          <div key={i} className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="flex justify-between px-3 py-2 bg-gray-50 border-b border-gray-100">
+              <span className="text-sm font-semibold text-gray-800">{s.name}</span>
+              <span className="text-xs text-gray-400">{s.pages}p</span>
+            </div>
+            <div className="px-3 py-2 text-xs text-gray-600 leading-relaxed whitespace-pre-line">{s.preview}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CompetitionResult({summary,findings}){
+  return (
+    <div>
+      <div className="p-3 bg-violet-50 border border-violet-200 rounded-lg mb-4 text-sm text-violet-800 font-medium">{summary}</div>
+      <ul className="space-y-2">
+        {findings.map((f,i)=>(
+          <li key={i} className="flex gap-2 text-sm text-gray-700">
+            <span className="text-violet-400 flex-shrink-0 mt-0.5">▪</span>{f}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function PapersResult({classification,topPapers}){
+  const cls={실험:"bg-emerald-50 text-emerald-700",시뮬레이션:"bg-sky-50 text-sky-700",리뷰:"bg-amber-50 text-amber-700",이론:"bg-gray-100 text-gray-600"};
+  return (
+    <div>
+      <div className="grid grid-cols-4 gap-2 mb-5">
+        {Object.entries(classification).map(([k,v])=>(
+          <div key={k} className={"rounded-xl p-3 text-center "+cls[k]}>
+            <div className="text-xl font-bold">{v}</div>
+            <div className="text-xs mt-0.5">{k}</div>
+          </div>
+        ))}
+      </div>
+      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">인용수 TOP 논문</div>
+      <div className="space-y-2">
+        {topPapers.map((p,i)=>(
+          <div key={i} className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+            <span className="text-xs font-bold text-gray-300 mt-0.5 w-4 flex-shrink-0">{i+1}</span>
+            <div>
+              <div className="text-sm text-gray-800 font-medium leading-snug">{p.title}</div>
+              <div className="mt-1 text-xs text-gray-400">{p.journal} · {p.year} · <span className="text-emerald-600 font-semibold">인용 {p.citations}</span></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PatentsResult({trend,topApplicants,color}){
+  return (
+    <div>
+      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">연도별 출원 추이</div>
+      <div style={{height:160}} className="mb-5">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={trend} margin={{top:4,right:4,bottom:4,left:-20}}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0"/>
+            <XAxis dataKey="year" tick={{fontSize:11}}/>
+            <YAxis tick={{fontSize:11}}/>
+            <Tooltip/>
+            <Bar dataKey="count" fill={color} radius={[4,4,0,0]} name="출원건수"/>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">출원인 TOP 5</div>
+      <div className="space-y-2">
+        {topApplicants.map((a,i)=>(
+          <div key={i} className="flex items-center gap-2">
+            <span className="text-xs text-gray-300 w-4 flex-shrink-0">{i+1}</span>
+            <span className="text-sm text-gray-700 w-28 flex-shrink-0">{a.name}</span>
+            <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full rounded-full" style={{width:`${(a.count/45)*100}%`,backgroundColor:color}}/>
+            </div>
+            <span className="text-xs text-gray-400 w-8 text-right flex-shrink-0">{a.count}건</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SpectralResult({samples}){
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="bg-gray-50">
+            {["샘플","피크 파장","강도","FWHM","판정"].map(h=>(
+              <th key={h} className="px-3 py-2 text-left font-semibold text-gray-600 border-b border-gray-200 whitespace-nowrap text-xs">{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {samples.map((s,i)=>(
+            <tr key={i} className={"border-b border-gray-100 "+(!s.ok?"bg-red-50":"hover:bg-gray-50")}>
+              <td className={"px-3 py-2.5 font-semibold "+(!s.ok?"text-red-700":"text-gray-900")}>{s.name}</td>
+              <td className="px-3 py-2.5 jb text-xs text-gray-700">{s.peak}</td>
+              <td className={"px-3 py-2.5 jb text-xs "+(!s.ok?"text-red-600 font-bold":"text-gray-700")}>{s.intensity}</td>
+              <td className={"px-3 py-2.5 jb text-xs "+(!s.ok?"text-red-600 font-bold":"text-gray-700")}>{s.fwhm}</td>
+              <td className="px-3 py-2.5">
+                <span className={"text-xs font-medium px-2 py-0.5 rounded-full "+(!s.ok?"bg-red-100 text-red-700":"bg-emerald-100 text-emerald-700")}>
+                  {s.ok?"✅ 양호":"⚠️ 재측정 필요"}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function EquipmentResult({items}){
+  return (
+    <div className="space-y-3">
+      {items.map((item,i)=>(
+        <div key={i} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+              <div className="text-xs text-gray-400 mt-0.5">주 이용팀: {item.top}</div>
+            </div>
+            <span className={"text-sm font-bold "+(item.pct>=100?"text-emerald-600":item.pct>=75?"text-amber-600":"text-red-500")}>
+              {item.pct}%
+            </span>
+          </div>
+          <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-1">
+            <div className={"h-full rounded-full "+(item.pct>=100?"bg-emerald-400":item.pct>=75?"bg-amber-400":"bg-red-400")} style={{width:`${Math.min(item.pct,100)}%`}}/>
+          </div>
+          <div className="text-xs text-gray-400">{item.hours}h / 목표 {item.target}h</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LetterResult({to,subject,preview,filename}){
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+        <IcoFile color="#B45309"/>
+        <span className="text-sm font-medium text-amber-800">{filename}</span>
+        <span className="ml-auto text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full">생성 완료</span>
+      </div>
+      <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="bg-gray-50 px-4 py-3 border-b border-gray-200 space-y-2">
+          <div><div className="text-xs text-gray-400">수신</div><div className="text-sm font-medium text-gray-800">{to}</div></div>
+          <div><div className="text-xs text-gray-400">제목</div><div className="text-sm font-medium text-gray-800">{subject}</div></div>
+        </div>
+        <div className="px-4 py-3">
+          <div className="text-sm text-gray-700 leading-relaxed whitespace-pre-line">{preview}</div>
+          <div className="mt-2 text-xs text-gray-400">…전문 보기</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ContentResult({outputs}){
+  const pal=["bg-sky-50 border-sky-200","bg-pink-50 border-pink-200","bg-violet-50 border-violet-200","bg-emerald-50 border-emerald-200"];
+  return (
+    <div className="space-y-3">
+      {outputs.map((o,i)=>(
+        <div key={i} className={"border rounded-xl p-4 "+pal[i%pal.length]}>
+          <div className="text-xs font-semibold text-gray-500 mb-1.5">{o.format}</div>
+          <div className="text-sm text-gray-800 leading-relaxed">{o.preview}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ResultDispatch({taskId,color}){
+  const r=RESULTS[taskId];
+  if(!r) return null;
+  switch(taskId){
+    case "announcements": return <AnnouncementsResult rows={r.rows}/>;
+    case "kpis":          return <KpiResult rows={r.rows}/>;
+    case "proposal":      return <ProposalResult filename={r.filename} sections={r.sections}/>;
+    case "competition":   return <CompetitionResult summary={r.summary} findings={r.findings}/>;
+    case "papers":        return <PapersResult classification={r.classification} topPapers={r.topPapers}/>;
+    case "patents":       return <PatentsResult trend={r.trend} topApplicants={r.topApplicants} color={color}/>;
+    case "spectral":      return <SpectralResult samples={r.samples}/>;
+    case "equipment":     return <EquipmentResult items={r.items}/>;
+    case "letter":        return <LetterResult to={r.to} subject={r.subject} preview={r.preview} filename={r.filename}/>;
+    case "content":       return <ContentResult outputs={r.outputs}/>;
+    default: return null;
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   터미널
+══════════════════════════════════════════════════ */
+function Terminal({prompt,phase}){
+  const [displayed,setDisplayed]=useState("");
+  const timer=useRef(null);
+  useEffect(()=>{
+    setDisplayed(""); let i=0;
+    timer.current=setInterval(()=>{ i++; setDisplayed(prompt.slice(0,i)); if(i>=prompt.length) clearInterval(timer.current); },16);
+    return ()=>clearInterval(timer.current);
+  },[prompt]);
+  return (
+    <div className="rounded-xl overflow-hidden jb">
+      <div className="flex items-center gap-1.5 px-4 py-2.5 bg-gray-800 border-b border-gray-700">
+        <span className="w-3 h-3 rounded-full bg-red-500"/>
+        <span className="w-3 h-3 rounded-full bg-yellow-500"/>
+        <span className="w-3 h-3 rounded-full bg-green-500"/>
+        <span className="ml-2 text-xs text-gray-400">터미널</span>
+      </div>
+      <div className="bg-gray-900 p-4 min-h-[90px]">
+        <span className="text-emerald-400 text-sm">$ </span>
+        <span className="text-gray-100 text-sm whitespace-pre-wrap">{displayed}</span>
+        {phase==="typing" && <span className="inline-block w-2 h-[14px] bg-gray-300 ml-0.5 align-middle blink-cur"/>}
+        {phase!=="typing" && (
+          <div className="mt-3 text-sm flex items-center gap-2">
+            {phase==="loading"
+              ? <><IcoLoader/><span className="text-yellow-400">실행 중...</span></>
+              : <><IcoCheck size={14} color="#34D399"/><span className="text-emerald-400">완료</span></>
+            }
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   실행 화면
+══════════════════════════════════════════════════ */
+function ExecutionView({agent,task,onBack}){
+  const [phase,setPhase]=useState("typing");
+  const [showResult,setShowResult]=useState(false);
+  const r=RESULTS[task.id];
+  useEffect(()=>{
+    const ms=task.prompt.length*16+500;
+    const t1=setTimeout(()=>setPhase("loading"),ms);
+    const t2=setTimeout(()=>{ setPhase("done"); setShowResult(true); },ms+1600);
+    return ()=>{ clearTimeout(t1); clearTimeout(t2); };
+  },[task]);
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+        <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-900 transition-colors">
+          <IcoArrow/> 팀으로 돌아가기
+        </button>
+      </div>
+      <div className="max-w-2xl mx-auto px-4 py-7 space-y-5">
+        <div className="flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            <img src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${agent.seed}&backgroundColor=${agent.color.replace("#","")}&backgroundType=solid`}
+              alt={agent.name} className="w-14 h-14 rounded-full border-2" style={{borderColor:agent.color}}/>
+            <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white pulse-dot"/>
+          </div>
+          <div>
+            <div className="text-lg font-bold text-gray-900">{agent.name}</div>
+            <div className="text-xs text-gray-400">{agent.dept} · {agent.rank}</div>
+            <div className="text-sm font-semibold mt-0.5" style={{color:agent.color}}>{task.label} 실행 중...</div>
+          </div>
+        </div>
+        <Terminal prompt={task.prompt} phase={phase}/>
+        {showResult && r && (
+          <div className="fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <IcoCheck size={17} color="#10B981"/>
+              <span className="font-bold text-gray-900">{r.title}</span>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+              <ResultDispatch taskId={task.id} color={agent.color}/>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   에이전트 카드
+══════════════════════════════════════════════════ */
+function TaskBtn({task,agent,onSelectTask}){
+  const [hov,setHov]=useState(false);
+  return (
+    <button
+      onClick={()=>onSelectTask(agent,task)}
+      onMouseEnter={()=>setHov(true)}
+      onMouseLeave={()=>setHov(false)}
+      className="w-full text-left text-sm px-3 py-2.5 rounded-xl border font-medium transition-all duration-150"
+      style={{backgroundColor:hov?agent.color:"transparent",borderColor:hov?agent.color:"#E5E7EB",color:hov?"white":"#374151"}}
+    >
+      ▶ {task.label}
+    </button>
+  );
+}
+
+function AgentCard({agent,onSelectTask}){
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col card-hover">
+      <div className="h-1.5 flex-shrink-0" style={{backgroundColor:agent.color}}/>
+      <div className="p-5 flex flex-col flex-1">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="relative flex-shrink-0">
+            <img src={`https://api.dicebear.com/7.x/lorelei/svg?seed=${agent.seed}&backgroundColor=${agent.color.replace("#","")}&backgroundType=solid`}
+              alt={agent.name} className="w-16 h-16 rounded-full border-2" style={{borderColor:agent.color}}/>
+            <span className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white bg-emerald-500 pulse-dot"/>
+          </div>
+          <div>
+            <div className="text-base font-bold text-gray-900">{agent.name}</div>
+            <div className="text-xs text-gray-400">{agent.rank}</div>
+            <span className="inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full"
+              style={{backgroundColor:agent.bgLight,color:agent.color}}>{agent.dept}</span>
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 italic mb-4">"{agent.status}"</p>
+        <div className="mt-auto space-y-2">
+          {agent.tasks.map(t=><TaskBtn key={t.id} task={t} agent={agent} onSelectTask={onSelectTask}/>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════
+   메인
+══════════════════════════════════════════════════ */
+function App(){
+  const [sel,setSel]=useState(null);
+  if(sel) return <ExecutionView agent={sel.agent} task={sel.task} onBack={()=>setSel(null)}/>;
+  const row1=AGENTS.slice(0,3), row2=AGENTS.slice(3,5);
+  const pick=(a,t)=>setSel({agent:a,task:t});
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 px-6 py-5">
+        <div className="max-w-5xl mx-auto flex items-start justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold text-gray-900 tracking-tight">KOPTI AI Agent Team</h1>
+            <p className="text-sm text-gray-400 mt-0.5">한국광기술원 AI 에이전트 팀</p>
+          </div>
+          <div className="text-right hidden sm:block">
+            <div className="text-xs text-gray-400">업무 지시는 자연어로, 실행은 AI가</div>
+            <div className="flex items-center gap-1.5 mt-1 justify-end">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot"/>
+              <span className="text-xs text-emerald-600 font-semibold">5명 온라인</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {row1.map(a=><AgentCard key={a.id} agent={a} onSelectTask={pick}/>)}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 lg:w-2/3 lg:mx-auto">
+          {row2.map(a=><AgentCard key={a.id} agent={a} onSelectTask={pick}/>)}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
