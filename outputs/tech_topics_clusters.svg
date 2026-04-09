@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="640">
+<rect width="100%" height="100%" fill="white"/>
+<text x="20" y="30" font-size="18" font-family="Arial" font-weight="bold">Technology Cluster Map</text>
+<text x="20" y="52" font-size="12" font-family="Arial">Edges connect clusters to included topics.</text>
+<circle cx="180" cy="100" r="24" fill="#2d7ff9" opacity="0.9"/>
+<text x="180" y="104" text-anchor="middle" font-size="12" fill="white" font-family="Arial">C0</text>
+<circle cx="180" cy="170" r="24" fill="#2d7ff9" opacity="0.9"/>
+<text x="180" y="174" text-anchor="middle" font-size="12" fill="white" font-family="Arial">C1</text>
+<circle cx="180" cy="240" r="24" fill="#2d7ff9" opacity="0.9"/>
+<text x="180" y="244" text-anchor="middle" font-size="12" fill="white" font-family="Arial">C2</text>
+<circle cx="180" cy="310" r="24" fill="#2d7ff9" opacity="0.9"/>
+<text x="180" y="314" text-anchor="middle" font-size="12" fill="white" font-family="Arial">C3</text>
+<rect x="608" y="74" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="88" text-anchor="middle" font-size="11" font-family="Arial">Topic 0</text>
+<text x="692" y="94" font-size="10" fill="#444" font-family="Arial">edge, industrial, smart</text>
+<rect x="608" y="126" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="140" text-anchor="middle" font-size="11" font-family="Arial">Topic 1</text>
+<text x="692" y="146" font-size="10" fill="#444" font-family="Arial">hospital, federat, learn</text>
+<rect x="608" y="178" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="192" text-anchor="middle" font-size="11" font-family="Arial">Topic 2</text>
+<text x="692" y="198" font-size="10" fill="#444" font-family="Arial">anomaly, detection, secure</text>
+<rect x="608" y="230" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="244" text-anchor="middle" font-size="11" font-family="Arial">Topic 3</text>
+<text x="692" y="250" font-size="10" fill="#444" font-family="Arial">security, intrusion, packet</text>
+<rect x="608" y="282" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="296" text-anchor="middle" font-size="11" font-family="Arial">Topic 4</text>
+<text x="692" y="302" font-size="10" fill="#444" font-family="Arial">machine, failure, prediction</text>
+<rect x="608" y="334" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="348" text-anchor="middle" font-size="11" font-family="Arial">Topic 5</text>
+<text x="692" y="354" font-size="10" fill="#444" font-family="Arial">on-device, inference, g06f</text>
+<rect x="608" y="386" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="400" text-anchor="middle" font-size="11" font-family="Arial">Topic 6</text>
+<text x="692" y="406" font-size="10" fill="#444" font-family="Arial">control, route, b60w</text>
+<rect x="608" y="438" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="452" text-anchor="middle" font-size="11" font-family="Arial">Topic 7</text>
+<text x="692" y="458" font-size="10" fill="#444" font-family="Arial">code, generation, language</text>
+<rect x="608" y="490" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="504" text-anchor="middle" font-size="11" font-family="Arial">Topic 8</text>
+<text x="692" y="510" font-size="10" fill="#444" font-family="Arial">driv, autonomou, self-driv</text>
+<rect x="608" y="542" width="64" height="32" rx="8" fill="#f2f5fb" stroke="#7a8aa0"/>
+<text x="640" y="556" text-anchor="middle" font-size="11" font-family="Arial">Topic 9</text>
+<text x="692" y="562" font-size="10" fill="#444" font-family="Arial">participant, encrypt, aggregation</text>
+<line x1="204" y1="170" x2="608" y2="90" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="170" x2="608" y2="194" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="170" x2="608" y2="506" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="100" x2="608" y2="142" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="100" x2="608" y2="402" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="100" x2="608" y2="454" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="310" x2="608" y2="246" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="310" x2="608" y2="350" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="310" x2="608" y2="558" stroke="#9bb7e5" stroke-width="1.5"/>
+<line x1="204" y1="240" x2="608" y2="298" stroke="#9bb7e5" stroke-width="1.5"/>
+</svg>
